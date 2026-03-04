@@ -75,7 +75,7 @@ def run_python(run_file: str, count: int, output_file: str):
         raise RuntimeError(f"File {run_file} is not correct.")
 
 
-def NIST1(bits: list[int]) -> bool:
+def NIST1(bits: list[int]):
     """
     1 тест NIST
     """
@@ -86,10 +86,10 @@ def NIST1(bits: list[int]) -> bool:
     
     result = math.erfc(result/math.sqrt(2))
 
-    return result >= 0.01
+    return result, result >= 0.01
 
 
-def NIST2(bits: list[int]) -> bool:
+def NIST2(bits: list[int]):
     """
     2 тест NIST
     """
@@ -104,9 +104,9 @@ def NIST2(bits: list[int]) -> bool:
             v+=1
     result = abs(v-2*len(bits)*j*(1-j))/(2*math.sqrt(2*len(bits))*j*(1-j))
     result = math.erfc(result)
-    return result >= 0.01
+    return result, result >= 0.01
 
-def NIST3(bits: list[int]) -> bool:
+def NIST3(bits: list[int]):
     """
     3 тест NIST
     """
@@ -145,7 +145,7 @@ def NIST3(bits: list[int]) -> bool:
         x = x + (v[i] - 16*n[i])**2/(16*n[i])
 
     result = sc.gammaincc(3/2, x/2)
-    return result >= 0.01
+    return result, result >= 0.01
 
 
 def bool_to_str(f: bool)->str:
@@ -166,24 +166,24 @@ def res_funk(cpp_file: str, java_file: str, py_file: str, res_file: str):
         with open(res_file, "w", encoding="utf-8") as file:
             file.write("Generator c++:\n")
             bits_cpp = read_numbers(cpp_file)
-            file.write(f"Test1: {bool_to_str(NIST1(bits_cpp))}\n")
-            file.write(f"Test2: {bool_to_str(NIST2(bits_cpp))}\n")
-            file.write(f"Test3: {bool_to_str(NIST3(bits_cpp))}\n\n")
+            file.write(f"Test1: P = {NIST1(bits_cpp)[0]} => {bool_to_str(NIST1(bits_cpp)[1])}\n")
+            file.write(f"Test2: P = {NIST2(bits_cpp)[0]} => {bool_to_str(NIST2(bits_cpp)[1])}\n")
+            file.write(f"Test3: P = {NIST3(bits_cpp)[0]} => {bool_to_str(NIST3(bits_cpp)[1])}\n\n")
 
             file.write("Generator java:\n")
             bits_java = read_numbers(java_file)
-            file.write(f"Test1: {bool_to_str(NIST1(bits_java))}\n")
-            file.write(f"Test2: {bool_to_str(NIST2(bits_java))}\n")
-            file.write(f"Test3: {bool_to_str(NIST3(bits_java))}\n\n")
+            file.write(f"Test1: P = {NIST1(bits_java)[0]} => {bool_to_str(NIST1(bits_java)[1])}\n")
+            file.write(f"Test2: P = {NIST2(bits_java)[0]} => {bool_to_str(NIST2(bits_java)[1])}\n")
+            file.write(f"Test3: P = {NIST3(bits_java)[0]} => {bool_to_str(NIST3(bits_java)[1])}\n\n")
 
             file.write("Generator python:\n")
             bits_py = read_numbers(py_file)
-            file.write(f"Test1: {bool_to_str(NIST1(bits_py))}\n")
-            file.write(f"Test2: {bool_to_str(NIST2(bits_py))}\n")
-            file.write(f"Test3: {bool_to_str(NIST3(bits_py))}")
+            file.write(f"Test1: P = {NIST1(bits_py)[0]} => {bool_to_str(NIST1(bits_py)[1])}\n")
+            file.write(f"Test2: P = {NIST2(bits_py)[0]} => {bool_to_str(NIST2(bits_py)[1])}\n")
+            file.write(f"Test3: P = {NIST3(bits_py)[0]} => {bool_to_str(NIST3(bits_py)[1])}")
     except Exception as e:
         raise e
-
+    
 
 def main():
     parser = argparse.ArgumentParser(description="Извлечение данных из файла на основе шаблонов.")
