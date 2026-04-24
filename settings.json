@@ -1,0 +1,11 @@
+{
+    "initial_file": "lab_3/texts/initial_file.txt",
+    "encrypted_file": "lab_3/texts/encrypted_file.txt",
+    "decrypted_file": "lab_3/texts/decrypted_file.txt",
+    "symmetric_key": "lab_3/keys/secret_symmetric.txt",
+    "public_key": "lab_3/keys/public_key.pem",
+    "secret_key": "lab_3/keys/secret_key.pem",
+    "generation_file": "lab_3/generation.py",
+    "encryption_file": "lab_3/encryption.py",
+    "decryption_file": "lab_3/decryption.py"
+}
