@@ -70,14 +70,14 @@ def main():
     
     paths = read_json(args.json_file)
 
-    if args.generation:
-        symmetric_key = paths["symmetric_key"] if not args.symmetric_key else args.symmetric_key
-        run_generation(paths["generation_file"], symmetric_key, paths["secret_key"], paths["public_key"])
-    else:
-        if args.encryption:
+    match args:
+        case _ if args.generation:
+            symmetric_key = paths["symmetric_key"] if not args.symmetric_key else args.symmetric_key
+            run_generation(paths["generation_file"], symmetric_key, paths["secret_key"], paths["public_key"])
+        case _ if args.encryption:
             symmetric_key = paths["symmetric_key"] if not args.symmetric_key else args.symmetric_key
             run_encryption(paths["encryption_file"], paths["initial_file"], symmetric_key, paths["secret_key"], paths["encrypted_file"])
-        else:
+        case _ if args.decryption: 
             symmetric_key = paths["symmetric_key"] if not args.symmetric_key else args.symmetric_key
             run_decryption(paths["decryption_file"], paths["encrypted_file"], symmetric_key, paths["secret_key"], paths["decrypted_file"]) 
 
