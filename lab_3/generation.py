@@ -2,22 +2,14 @@ import argparse
 import os
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives import serialization, hashes
-from cryptography.hazmat.primitives.serialization import load_pem_private_key
-
-def readfile(filename: str) -> bytes:
-    """
-    Read file in binary mode
-    """
-    try:
-        with open(filename, 'rb') as file:
-            return file.read()
-    except FileNotFoundError as e:
-        return b""
-
+from fileworks import read_bytes
 
 def symmetric_key_generation()->bytes:
     """
     Generate symmetric keys
+
+    Returns:
+        bytes: Random 32-byte symmetric key
     """
     key = os.urandom(32)
     return key
@@ -26,6 +18,9 @@ def symmetric_key_generation()->bytes:
 def asymmetric_keys_generation():
     """
     Generate asymmetric keys
+
+    Returns:
+        tuple: (private_key, public_key) where private_key is RSA private key and public_key is corresponding RSA public key
     """
     keys = rsa.generate_private_key(
         public_exponent=65537,
@@ -39,7 +34,11 @@ def asymmetric_keys_generation():
 
 def secret_key_writter(secret_pem: str, private_key: bytes):
     """
-    Write secret key
+    Write secret key in pem file
+
+    Args:
+        secret_pem: Path to output private key file
+        private_key: Private key to write
     """
     with open(secret_pem, 'wb') as private_out:
         private_out.write(private_key.private_bytes(encoding=serialization.Encoding.PEM,
@@ -49,7 +48,11 @@ def secret_key_writter(secret_pem: str, private_key: bytes):
 
 def public_key_writter(public_pem: str, public_key: bytes):
     """
-    Write public key
+    Write public key in pem file
+
+    Args:
+        public_pem: Path to output public key file
+        public_key: Public key to write
     """
     with open(public_pem, 'wb') as public_out:
         public_out.write(public_key.public_bytes(encoding=serialization.Encoding.PEM,
@@ -59,14 +62,26 @@ def public_key_writter(public_pem: str, public_key: bytes):
 def asymmetric_keys_writter(secret_pem: str, public_pem: str, asymmetric_keys: tuple):
     """
     Write asymmetric keys
+
+    Args:
+        secret_pem: Path to output private key file
+        public_pem: Path to output public key file
+        asymmetric_keys: Tuple containing (private_key, public_key)
     """
     secret_key_writter(secret_pem, asymmetric_keys[0])
     public_key_writter(public_pem, asymmetric_keys[1])
 
 
-def key_encription(symmetric_key: bytes, public_key: bytes, private_key_file: str):
+def key_encription(symmetric_key: bytes, public_key: bytes):
     """
     Symmetric key encryption
+
+    Args:
+        symmetric_key: Symmetric key bytes
+        public_key: Public key for encryption
+    
+    Returns:
+        bytes: Encrypted symmetric key
     """
     try:
         return public_key.encrypt(symmetric_key, padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()),algorithm=hashes.SHA256(),label=None))
@@ -78,6 +93,10 @@ def key_encription(symmetric_key: bytes, public_key: bytes, private_key_file: st
 def symmetric_key_writter(filepath: str, symmetric_key: bytes):
     """
     Write symmetric key
+
+    Args:
+        filepath: Path to output file
+        symmetric_key: Symmetric key bytes to write
     """
     with open(filepath, "wb") as file:
         file.write(symmetric_key)
@@ -91,12 +110,13 @@ def main():
     args = parser.parse_args()
 
     try:
-        symmetric_key = readfile(args.symmetric_key)
-        if len(symmetric_key) == 0:
+        try:
+            symmetric_key = read_bytes(args.symmetric_key)
+        except FileNotFoundError:
             symmetric_key = symmetric_key_generation()
         asymmetric_keys = asymmetric_keys_generation()
         asymmetric_keys_writter(args.secret_key, args.public_key, asymmetric_keys)
-        encrypted_key = key_encription(symmetric_key, asymmetric_keys[1], args.secret_key)
+        encrypted_key = key_encription(symmetric_key, asymmetric_keys[1])
         symmetric_key_writter(args.symmetric_key, encrypted_key)
     except Exception as e:
         print(f"Error: {e}")

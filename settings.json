@@ -6,6 +6,5 @@
     "public_key": "lab_3/keys/public_key.pem",
     "secret_key": "lab_3/keys/secret_key.pem",
     "generation_file": "lab_3/generation.py",
-    "encryption_file": "lab_3/encryption.py",
-    "decryption_file": "lab_3/decryption.py"
+    "cryption_file": "lab_3/cryption.py"
 }
