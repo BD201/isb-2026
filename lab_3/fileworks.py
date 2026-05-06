@@ -71,7 +71,6 @@ def read_bytes(filename: str) -> bytes:
         with open(filename, 'rb') as file:
             return file.read()
     except FileNotFoundError as e:
-        print(f"Error: {e}")
         raise e
     
 
@@ -91,7 +90,7 @@ def str_writer(text: str, filename: str):
         raise e
 
 
-def encrypted_ChaCha20_writer(text: bytes, nonce: str, filename: str):
+def encrypted_ChaCha20_writer(text: bytes, nonce: bytes, filename: str):
     """
     Write encrypted text and nonce
     

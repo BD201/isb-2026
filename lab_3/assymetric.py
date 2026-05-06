@@ -1,19 +1,8 @@
-import argparse
-import os
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives import serialization, hashes
-from fileworks import read_bytes
-
-def symmetric_key_generation()->bytes:
-    """
-    Generate symmetric keys
-
-    Returns:
-        bytes: Random 32-byte symmetric key
-    """
-    key = os.urandom(32)
-    return key
-
+from cryptography.hazmat.primitives.asymmetric import rsa, padding
+from cryptography.hazmat.primitives import serialization, hashes
+from cryptography.hazmat.primitives.serialization import load_pem_private_key
 
 def asymmetric_keys_generation():
     """
@@ -72,6 +61,25 @@ def asymmetric_keys_writter(secret_pem: str, public_pem: str, asymmetric_keys: t
     public_key_writter(public_pem, asymmetric_keys[1])
 
 
+def get_secret_key(filename: str):
+    """
+    Read asymmetric key from file
+
+    Args:
+        filename: Path to the pem private key file
+    
+    Returns:
+        Private key
+    """
+    try:
+        with open(filename, 'rb') as file:
+            private_bytes = file.read()
+        return load_pem_private_key(private_bytes,password=None,)
+    except Exception as e:
+        print(f"Error: {e}")
+        raise e
+
+
 def key_encription(symmetric_key: bytes, public_key: bytes):
     """
     Symmetric key encryption
@@ -90,37 +98,21 @@ def key_encription(symmetric_key: bytes, public_key: bytes):
         return public_key.encrypt(symmetric_key, padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()),algorithm=hashes.SHA256(),label=None))
 
 
-def symmetric_key_writter(filepath: str, symmetric_key: bytes):
+def decrypt_key(key: bytes, secret_key: bytes) -> bytes:
     """
-    Write symmetric key
+    Decryption of symmetric key
 
     Args:
-        filepath: Path to output file
-        symmetric_key: Symmetric key bytes to write
+        key: Encrypted symmetric key bytes
+        secret_key: Private key
+    
+    Returns:
+        bytes: Decrypted symmetric key
     """
-    with open(filepath, "wb") as file:
-        file.write(symmetric_key)
-
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-sy", "--symmetric_key", required=True, help="Path to symmetric key file")
-    parser.add_argument("-s", "--secret_key", required=True, help="Path to secret key file")
-    parser.add_argument("-p", "--public_key", required=True, help="Path to public key file")
-    args = parser.parse_args()
-
     try:
-        try:
-            symmetric_key = read_bytes(args.symmetric_key)
-        except FileNotFoundError:
-            symmetric_key = symmetric_key_generation()
-        asymmetric_keys = asymmetric_keys_generation()
-        asymmetric_keys_writter(args.secret_key, args.public_key, asymmetric_keys)
-        encrypted_key = key_encription(symmetric_key, asymmetric_keys[1])
-        symmetric_key_writter(args.symmetric_key, encrypted_key)
+        return secret_key.decrypt(key,padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()),algorithm=hashes.SHA256(),label=None))
+    except ValueError:
+        return key
     except Exception as e:
         print(f"Error: {e}")
-
-
-if __name__ == "__main__":
-    main()
+        raise e

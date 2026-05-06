@@ -1,35 +1,8 @@
 import argparse
 import sys
-from fileworks import read_json, run_py 
-
-def run_generation(run_file: str, symmetric_key: str, secret_key: str, public_key: str):
-    """
-    Run key generation file
-
-    Args:
-        run_file: Path to the key generation Python script
-        symmetric_key: Path where symmetric key will be saved
-        secret_key: Path where private (secret) key will be saved
-        public_key: Path where public key will be saved
-    """
-    run_py([sys.executable, run_file, "-sy", symmetric_key, "-s", secret_key, "-p", public_key])
-
-
-def run_cryption(run_file: str, input: str, key: str, key_for_key: str, output: str, mode: str):
-    """
-    Run text encryption or decryption
-    
-    Args:
-        run_file: Path to the encryption/decryption Python script
-        input: Path to input file (plaintext for encryption, ciphertext for decryption)
-        key: Path to symmetric key file
-        key_for_key: Path to private key file for decrypting the symmetric key
-        output: Path to output file (ciphertext for encryption, plaintext for decryption)
-        mode: Operation mode - "-e" for encryption or "-d" for decryption
-    """
-    if mode != '-e' and mode != '-d':
-        raise RuntimeError("Not correct mode.")
-    run_py([sys.executable, run_file, "-i", input, "-k", key, "-s", key_for_key, "-o", output, mode])
+from fileworks import *
+from assymetric import *
+from symmetric import *
 
 
 def main():
@@ -44,19 +17,55 @@ def main():
 
     args = parser.parse_args()
     
-    paths = read_json(args.json_file)
+    try:
+        paths = read_json(args.json_file)
+        symmetric_key_file = args.symmetric_key if args.symmetric_key else paths["symmetric_key"]
+        secret_key_file = paths["secret_key"]
+        public_key_file = paths["public_key"]
+        initial_file = paths["initial_file"]
+        encrypted_file = paths["encrypted_file"]
+        decrypted_file = paths["decrypted_file"]
+    except Exception as e:
+        print(f"Error: {e}")
+        raise e
 
     match args:
         case _ if args.generation:
-            symmetric_key = paths["symmetric_key"] if not args.symmetric_key else args.symmetric_key
-            run_generation(paths["generation_file"], symmetric_key, paths["secret_key"], paths["public_key"])
-        case _ if args.encryption:
-            symmetric_key = paths["symmetric_key"] if not args.symmetric_key else args.symmetric_key
-            run_cryption(paths["cryption_file"], paths["initial_file"], symmetric_key, paths["secret_key"], paths["encrypted_file"], "-e")
-        case _ if args.decryption: 
-            symmetric_key = paths["symmetric_key"] if not args.symmetric_key else args.symmetric_key
-            run_cryption(paths["cryption_file"], paths["encrypted_file"], symmetric_key, paths["secret_key"], paths["decrypted_file"], "-d") 
+            try:
+                try:
+                    symmetric_key = read_bytes(symmetric_key_file)
+                except FileNotFoundError:
+                    symmetric_key = symmetric_key_generation()
+                asymmetric_keys = asymmetric_keys_generation()
+                asymmetric_keys_writter(secret_key_file, public_key_file, asymmetric_keys)
+                encrypted_key = key_encription(symmetric_key, asymmetric_keys[1])
+                symmetric_key_writter(symmetric_key_file, encrypted_key)
+            except Exception as e:
+                print(f"Error: {e}")
 
+        case _ if args.encryption:
+            try:
+                key = read_bytes(symmetric_key_file)
+                secret_key = get_secret_key(secret_key_file)
+                key = decrypt_key(key, secret_key)
+
+                text = read_str(initial_file)
+                result_text, nonce = text_encryption(text, key)
+                encrypted_ChaCha20_writer(result_text, nonce, encrypted_file)
+            except Exception as e:
+                print(f"Error {e}")
+
+        case _ if args.decryption:
+            try: 
+                key = read_bytes(symmetric_key_file)
+                secret_key = get_secret_key(secret_key_file)
+                key = decrypt_key(key, secret_key)
+
+                text = read_bytes(encrypted_file)
+                result_text = text_decryption(text, key)
+                str_writer(result_text, decrypted_file)
+            except Exception as e:
+                print(f"Error {e}")
 
 if __name__ == "__main__":
     main()
