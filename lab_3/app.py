@@ -32,9 +32,9 @@ def main():
     match args:
         case _ if args.generation:
             try:
-                try:
+                if(args.symmetric_key):
                     symmetric_key = read_bytes(symmetric_key_file)
-                except FileNotFoundError:
+                else:
                     symmetric_key = symmetric_key_generation()
                 asymmetric_keys = asymmetric_keys_generation()
                 asymmetric_keys_writter(secret_key_file, public_key_file, asymmetric_keys)
